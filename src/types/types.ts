@@ -49,6 +49,12 @@ export interface VideoWithAuthor extends Video {
   author_username: string;
 }
 
+export interface VideoCardData extends Video {
+  author_username?: string;
+  watched_at?: Date | string;
+  liked_at?: Date | string;
+}
+
 export interface UserSubscriptionDetails extends UserSubscription {
   plan_name: string;
   plan_price: number;

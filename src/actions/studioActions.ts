@@ -106,3 +106,50 @@ export async function deleteVideo(videoId: number) {
   revalidatePath("/studio");
   revalidatePath("/", "layout");
 }
+
+export async function getMySubscriptions() {
+  const userId = await getCurrentUserId();
+  if (!userId) return [];
+
+  const sql = `
+    SELECT u.user_id, u.username, u.channel_description,
+           (SELECT COUNT(*) FROM subscriptions WHERE user_id = u.user_id) as sub_count
+    FROM users u
+    JOIN subscriptions s ON u.user_id = s.channel_id
+    WHERE s.subscriber_id = $1
+  `;
+  const res = await query<any>(sql, [userId]);
+  return res.rows;
+}
+
+export async function getWatchHistory() {
+  const userId = await getCurrentUserId();
+  if (!userId) return [];
+
+  const sql = `
+    SELECT v.*, u.username as author_username, wh.watched_at
+    FROM watch_history wh
+    JOIN videos v ON wh.video_id = v.video_id
+    JOIN users u ON v.author_id = u.user_id
+    WHERE wh.user_id = $1
+    ORDER BY wh.watched_at DESC
+  `;
+  const res = await query<any>(sql, [userId]);
+  return res.rows;
+}
+
+export async function getLikedVideos() {
+  const userId = await getCurrentUserId();
+  if (!userId) return [];
+
+  const sql = `
+    SELECT v.*, u.username as author_username, l.created_at as liked_at
+    FROM likes l
+    JOIN videos v ON l.video_id = v.video_id
+    JOIN users u ON v.author_id = u.user_id
+    WHERE l.user_id = $1
+    ORDER BY l.created_at DESC
+  `;
+  const res = await query<any>(sql, [userId]);
+  return res.rows;
+}

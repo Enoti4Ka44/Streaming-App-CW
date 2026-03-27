@@ -1,5 +1,5 @@
 import { Video } from "@/types/types";
-import { Image, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Image, MoreVertical, Pencil, Play, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +26,7 @@ const StudioVideoCard = ({
         href={`/video/${video.video_id}`}
         className="aspect-video bg-secondary relative flex items-center justify-center"
       >
-        <Image className="h-10 w-10 text-muted-foreground transition-transform group-hover:scale-110" />
+        <Play className="h-10 w-10 text-muted-foreground transition-transform group-hover:scale-110" />
 
         <span
           className={`absolute bottom-2 right-2 ${video.video_type === "shorts" ? "bg-red-600" : "bg-black"} text-white text-[10px] font-bold px-2 py-1 rounded`}

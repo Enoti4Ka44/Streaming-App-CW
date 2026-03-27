@@ -1,5 +1,5 @@
 import { VideoWithAuthor } from "@/types/types";
-import { Image } from "lucide-react";
+import { Image, Play } from "lucide-react";
 import Link from "next/link";
 
 export default function VideoCard({ video }: { video: VideoWithAuthor }) {
@@ -19,7 +19,7 @@ export default function VideoCard({ video }: { video: VideoWithAuthor }) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-            <Image />
+            <Play />
           </div>
         )}
       </div>
