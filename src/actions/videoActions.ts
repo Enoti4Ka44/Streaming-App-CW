@@ -98,37 +98,44 @@ export async function toggleLike(videoId: number) {
 
 export async function recordView(videoId: number) {
   const userId = await getCurrentUserId();
-  if (!userId) {
-    await query(
-      `UPDATE videos SET views_count = views_count + 1 WHERE video_id = $1`,
-      [videoId],
-    );
-    return;
-  }
 
-  const sql = `
-    WITH inserted_view AS (
+  try {
+    if (!userId) {
+      await query(
+        `UPDATE videos SET views_count = views_count + 1 WHERE video_id = $1`,
+        [videoId],
+      );
+      return;
+    }
+
+    const viewSql = `
       INSERT INTO views (user_id, video_id, viewed_at)
       VALUES ($1, $2, NOW())
       ON CONFLICT (user_id, video_id) DO NOTHING
       RETURNING *
-    )
-    UPDATE videos 
-    SET views_count = views_count + 1 
-    WHERE video_id = $2 
-      AND EXISTS (SELECT 1 FROM inserted_view);
-  `;
+    `;
+    const viewResult = await query(viewSql, [userId, videoId]);
+    console.log(userId, videoId);
 
-  await query(sql, [userId, videoId]);
+    if (viewResult.rows.length > 0) {
+      await query(
+        `UPDATE videos SET views_count = views_count + 1 WHERE video_id = $1`,
+        [videoId],
+      );
+    }
 
-  await query(
-    `
-    INSERT INTO watch_history (user_id, video_id, watched_at)
-    VALUES ($1, $2, NOW())
-    ON CONFLICT (user_id, video_id) DO UPDATE SET watched_at = NOW()
-  `,
-    [userId, videoId],
-  );
+    const historySql = `
+      INSERT INTO watch_history (user_id, video_id, watched_at)
+      VALUES ($1, $2, NOW())
+      ON CONFLICT (user_id, video_id) 
+      DO UPDATE SET watched_at = NOW()
+    `;
+    await query(historySql, [userId, videoId]);
+
+    revalidatePath(`/`);
+  } catch (error) {
+    console.error("Критическая ошибка в recordView:", error);
+  }
 }
 
 export async function getAuthorSubInfo(authorId: number) {

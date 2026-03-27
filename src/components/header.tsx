@@ -84,10 +84,10 @@ export default function Header({
             <DropdownMenuContent className="w-56" align="end">
               <DropdownMenuLabel>Мой канал</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link href="/studio">Личный кабинет</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link href="/settings">Настройки</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

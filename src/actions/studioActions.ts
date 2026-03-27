@@ -113,7 +113,7 @@ export async function getMySubscriptions() {
 
   const sql = `
     SELECT u.user_id, u.username, u.channel_description,
-           (SELECT COUNT(*) FROM subscriptions WHERE user_id = u.user_id) as sub_count
+           (SELECT COUNT(*) FROM subscriptions WHERE channel_id = u.user_id) as sub_count
     FROM users u
     JOIN subscriptions s ON u.user_id = s.channel_id
     WHERE s.subscriber_id = $1
