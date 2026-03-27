@@ -3,6 +3,7 @@
 import { VideoWithAuthor } from "@/types/types";
 import { query } from "@/utils/db";
 import { revalidatePath } from "next/cache";
+import { getCurrentUserId } from "@/actions/authActions";
 
 export async function getVideos(
   videoType: "video" | "shorts" = "video",
@@ -33,8 +34,6 @@ export async function getVideos(
   }
 }
 
-const CURRENT_USER_ID = 1;
-
 export async function getVideoDetails(videoId: number) {
   const sql = `
     SELECT v.*, u.username as author_username, u.user_id as author_id
@@ -47,12 +46,23 @@ export async function getVideoDetails(videoId: number) {
 }
 
 export async function getLikeStatus(videoId: number) {
+  const userId = await getCurrentUserId();
+
   const countSql = `SELECT COUNT(*) FROM likes WHERE video_id = $1`;
+
+  if (!userId) {
+    const countRes = await query(countSql, [videoId]);
+    return {
+      likesCount: parseInt(countRes.rows[0].count, 10),
+      isLiked: false,
+    };
+  }
+
   const statusSql = `SELECT 1 FROM likes WHERE video_id = $1 AND user_id = $2`;
 
   const [countRes, statusRes] = await Promise.all([
     query(countSql, [videoId]),
-    query(statusSql, [videoId, CURRENT_USER_ID]),
+    query(statusSql, [videoId, userId]),
   ]);
 
   return {
@@ -62,18 +72,24 @@ export async function getLikeStatus(videoId: number) {
 }
 
 export async function toggleLike(videoId: number) {
+  const userId = await getCurrentUserId();
+
+  if (!userId) {
+    throw new Error("Необходимо войти в аккаунт, чтобы ставить лайки");
+  }
+
   const checkSql = `SELECT 1 FROM likes WHERE video_id = $1 AND user_id = $2`;
-  const res = await query(checkSql, [videoId, CURRENT_USER_ID]);
+  const res = await query(checkSql, [videoId, userId]);
 
   if (res.rows.length > 0) {
     await query(`DELETE FROM likes WHERE video_id = $1 AND user_id = $2`, [
       videoId,
-      CURRENT_USER_ID,
+      userId,
     ]);
   } else {
     await query(
       `INSERT INTO likes (video_id, user_id, created_at) VALUES ($1, $2, NOW())`,
-      [videoId, CURRENT_USER_ID],
+      [videoId, userId],
     );
   }
 
@@ -81,6 +97,15 @@ export async function toggleLike(videoId: number) {
 }
 
 export async function recordView(videoId: number) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    await query(
+      `UPDATE videos SET views_count = views_count + 1 WHERE video_id = $1`,
+      [videoId],
+    );
+    return;
+  }
+
   const sql = `
     WITH inserted_view AS (
       INSERT INTO views (user_id, video_id, viewed_at)
@@ -94,7 +119,7 @@ export async function recordView(videoId: number) {
       AND EXISTS (SELECT 1 FROM inserted_view);
   `;
 
-  await query(sql, [CURRENT_USER_ID, videoId]);
+  await query(sql, [userId, videoId]);
 
   await query(
     `
@@ -102,6 +127,6 @@ export async function recordView(videoId: number) {
     VALUES ($1, $2, NOW())
     ON CONFLICT (user_id, video_id) DO UPDATE SET watched_at = NOW()
   `,
-    [CURRENT_USER_ID, videoId],
+    [userId, videoId],
   );
 }
