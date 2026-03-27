@@ -85,7 +85,7 @@ export default function Header({
               <DropdownMenuLabel>Мой канал</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
-                <Link href="/dashboard">Личный кабинет</Link>
+                <Link href="/studio">Личный кабинет</Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Link href="/settings">Настройки</Link>
