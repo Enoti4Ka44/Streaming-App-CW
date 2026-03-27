@@ -4,10 +4,12 @@ import { Separator } from "@/components/ui/separator";
 import LikeButton from "@/components/like-button";
 import { notFound } from "next/navigation";
 import {
+  getAuthorSubInfo,
   getLikeStatus,
   getVideoDetails,
   recordView,
 } from "@/actions/videoActions";
+import SubscribeButton from "@/components/subscribe-button";
 
 export default async function VideoPage({
   params,
@@ -23,6 +25,7 @@ export default async function VideoPage({
     getVideoDetails(videoId),
     getLikeStatus(videoId),
   ]);
+  const subInfo = await getAuthorSubInfo(video.author_id);
 
   if (!video) return notFound();
 
@@ -50,14 +53,18 @@ export default async function VideoPage({
               {video.author_username[0].toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div>
-            <p className="font-semibold text-base">{video.author_username}</p>
-            <p className="text-xs text-muted-foreground">Автор</p>
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col">
+              <span className="font-bold text-lg">{video.author_username}</span>
+              <span className="text-xs text-muted-foreground mt-1">
+                {subInfo.subCount} подписчиков
+              </span>
+            </div>
+            <SubscribeButton
+              authorId={video.author_id}
+              initialIsSubscribed={subInfo.isSubscribed}
+            />
           </div>
-
-          <Button variant="default" className="rounded-full ml-4 font-semibold">
-            Подписаться
-          </Button>
         </div>
 
         <div className="flex items-center gap-2">

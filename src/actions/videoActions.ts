@@ -130,3 +130,43 @@ export async function recordView(videoId: number) {
     [userId, videoId],
   );
 }
+
+export async function getAuthorSubInfo(authorId: number) {
+  const userId = await getCurrentUserId();
+
+  const countSql = `SELECT COUNT(*) as total FROM subscriptions WHERE channel_id = $1`;
+  const checkSql = `SELECT 1 FROM subscriptions WHERE subscriber_id = $1 AND channel_id = $2`;
+
+  const [countRes, checkRes] = await Promise.all([
+    query<{ total: string }>(countSql, [authorId]),
+    userId ? query(checkSql, [userId, authorId]) : { rows: [] },
+  ]);
+
+  return {
+    subCount: parseInt(countRes.rows[0].total, 10),
+    isSubscribed: checkRes.rows.length > 0,
+  };
+}
+
+export async function toggleSubscription(authorId: number) {
+  const userId = await getCurrentUserId();
+  if (!userId) throw new Error("Вы должны войти в аккаунт");
+  if (userId === authorId) throw new Error("Нельзя подписаться на самого себя");
+
+  const checkSql = `SELECT 1 FROM subscriptions WHERE subscriber_id = $1 AND channel_id = $2`;
+  const res = await query(checkSql, [userId, authorId]);
+
+  if (res.rows.length > 0) {
+    await query(
+      `DELETE FROM subscriptions WHERE subscriber_id = $1 AND channel_id = $2`,
+      [userId, authorId],
+    );
+  } else {
+    await query(
+      `INSERT INTO subscriptions (subscriber_id, channel_id) VALUES ($1, $2)`,
+      [userId, authorId],
+    );
+  }
+
+  revalidatePath("/", "layout");
+}

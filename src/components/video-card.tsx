@@ -8,7 +8,9 @@ export default function VideoCard({ video }: { video: VideoWithAuthor }) {
       href={`/video/${video.video_id}`}
       className="group flex flex-col gap-2 cursor-pointer"
     >
-      <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted">
+      <div
+        className={`relative ${video.video_type === "shorts" ? "aspect-2/3" : "aspect-video"} w-full overflow-hidden rounded-xl bg-muted`}
+      >
         {video.thumbnail_url ? (
           <img
             src={video.thumbnail_url}

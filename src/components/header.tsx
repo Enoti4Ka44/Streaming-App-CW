@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { loginAsUser, logout } from "@/actions/authActions";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface UserInfo {
@@ -83,10 +82,19 @@ export default function Header({
             </DropdownMenuTrigger>
 
             <DropdownMenuContent className="w-56" align="end">
-              <DropdownMenuLabel>Переключить аккаунт</DropdownMenuLabel>
+              <DropdownMenuLabel>Мой канал</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <Link href="/dashboard">Личный кабинет</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link href="/settings">Настройки</Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Сменить аккаунт</DropdownMenuLabel>
               <DropdownMenuSeparator />
 
-              {allUsers.map((user) => (
+              {allUsers.slice(0, 5).map((user) => (
                 <DropdownMenuItem
                   key={user.user_id}
                   onClick={() => handleUserChange(user.user_id)}
