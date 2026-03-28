@@ -3,8 +3,11 @@
 import { query } from "@/utils/db";
 import { getCurrentUserId } from "@/actions/authActions";
 import { revalidatePath } from "next/cache";
+import { ChannelStats, Subscriptions } from "@/types/channel";
+import { LikedVideo, Video, WatchHistory } from "@/types/video";
 
-export async function getChannelStats() {
+//Статистика канала
+export async function getChannelStats(): Promise<ChannelStats | null> {
   const userId = await getCurrentUserId();
   if (!userId) return null;
 
@@ -13,32 +16,38 @@ export async function getChannelStats() {
       u.username,
       u.created_at as registration_date,
       u.channel_description,
-      (SELECT COUNT(*) FROM subscriptions WHERE user_id = $1) as subscribers_count,
+      (SELECT COUNT(*) FROM subscriptions WHERE channel_id = $1) as subscribers_count,
       (SELECT COUNT(*) FROM videos WHERE author_id = $1) as total_videos,
       (SELECT COALESCE(SUM(views_count), 0) FROM videos WHERE author_id = $1) as total_views
     FROM users u
     WHERE u.user_id = $1
   `;
 
-  try {
-    const result = await query<any>(sql, [userId]);
-    return result.rows[0];
-  } catch (error) {
-    console.error("Error fetching channel stats:", error);
-    return null;
-  }
+  const result = await query<ChannelStats>(sql, [userId]);
+
+  if (!result.rows[0]) return null;
+
+  return {
+    ...result.rows[0],
+    subscribers_count: Number(result.rows[0].subscribers_count),
+    total_videos: Number(result.rows[0].total_videos),
+    total_views: Number(result.rows[0].total_views),
+  };
 }
 
-export async function getMyVideos() {
+//Видео пользователя
+
+export async function getMyVideos(): Promise<Video[]> {
   const userId = await getCurrentUserId();
   if (!userId) return [];
 
   const sql = `
-    SELECT * FROM videos 
-    WHERE author_id = $1 
+    SELECT * FROM videos_with_authors
+    WHERE author_id = $1
     ORDER BY created_at DESC
   `;
-  const result = await query<any>(sql, [userId]);
+
+  const result = await query<Video>(sql, [userId]);
   return result.rows;
 }
 
@@ -107,49 +116,60 @@ export async function deleteVideo(videoId: number) {
   revalidatePath("/", "layout");
 }
 
-export async function getMySubscriptions() {
+//Все подписки пользователя
+export async function getMySubscriptions(): Promise<Subscriptions[]> {
   const userId = await getCurrentUserId();
   if (!userId) return [];
 
   const sql = `
-    SELECT u.user_id, u.username, u.channel_description,
-           (SELECT COUNT(*) FROM subscriptions WHERE channel_id = u.user_id) as sub_count
+    SELECT 
+      u.user_id, 
+      u.username, 
+      u.channel_description,
+      (SELECT COUNT(*) FROM subscriptions WHERE channel_id = u.user_id) as sub_count
     FROM users u
     JOIN subscriptions s ON u.user_id = s.channel_id
     WHERE s.subscriber_id = $1
   `;
-  const res = await query<any>(sql, [userId]);
-  return res.rows;
+
+  const res = await query<Subscriptions>(sql, [userId]);
+
+  return res.rows.map((row) => ({
+    ...row,
+    sub_count: Number(row.sub_count),
+  }));
 }
 
-export async function getWatchHistory() {
+//История просмотра пользователя
+export async function getWatchHistory(): Promise<WatchHistory[]> {
   const userId = await getCurrentUserId();
   if (!userId) return [];
 
   const sql = `
-    SELECT v.*, u.username as author_username, wh.watched_at
+    SELECT vwa.*, wh.watched_at
     FROM watch_history wh
-    JOIN videos v ON wh.video_id = v.video_id
-    JOIN users u ON v.author_id = u.user_id
+    JOIN videos_with_authors vwa ON wh.video_id = vwa.video_id
     WHERE wh.user_id = $1
     ORDER BY wh.watched_at DESC
   `;
-  const res = await query<any>(sql, [userId]);
+
+  const res = await query<WatchHistory>(sql, [userId]);
   return res.rows;
 }
 
-export async function getLikedVideos() {
+//Лайкнутые видео пользователя
+export async function getLikedVideos(): Promise<LikedVideo[]> {
   const userId = await getCurrentUserId();
   if (!userId) return [];
 
   const sql = `
-    SELECT v.*, u.username as author_username, l.created_at as liked_at
+    SELECT vwa.*, l.created_at as liked_at
     FROM likes l
-    JOIN videos v ON l.video_id = v.video_id
-    JOIN users u ON v.author_id = u.user_id
+    JOIN videos_with_authors vwa ON l.video_id = vwa.video_id
     WHERE l.user_id = $1
     ORDER BY l.created_at DESC
   `;
-  const res = await query<any>(sql, [userId]);
+
+  const res = await query<LikedVideo>(sql, [userId]);
   return res.rows;
 }

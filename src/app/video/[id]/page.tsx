@@ -1,15 +1,14 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import LikeButton from "@/components/like-button";
 import { notFound } from "next/navigation";
 import {
-  getAuthorSubInfo,
   getLikeStatus,
-  getVideoDetails,
+  getSubStatus,
+  getVideoById,
   recordView,
 } from "@/actions/videoActions";
-import SubscribeButton from "@/components/subscribe-button";
+import VideoPlayer from "@/components/video-player";
+import ChannelCard from "@/components/channel-card";
 
 export default async function VideoPage({
   params,
@@ -19,53 +18,30 @@ export default async function VideoPage({
   const resolvedParams = await params;
   const videoId = parseInt(resolvedParams.id, 10);
 
-  if (isNaN(videoId)) return notFound();
-
   const [video, likeData] = await Promise.all([
-    getVideoDetails(videoId),
+    getVideoById(videoId),
     getLikeStatus(videoId),
   ]);
-  const subInfo = await getAuthorSubInfo(video.author_id);
 
   if (!video) return notFound();
+
+  const subInfo = await getSubStatus(video.author_id);
 
   recordView(videoId).catch(console.error);
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6 lg:p-8">
-      <div className="w-full aspect-video bg-black rounded-xl overflow-hidden mb-6 flex items-center justify-center relative">
-        {video.url ? (
-          <video controls className="w-full h-full object-contain bg-black">
-            <source src={video.url} type="video/mp4" />
-            Ваш браузер не поддерживает видео.
-          </video>
-        ) : (
-          <p className="text-white text-xl">Плеер видео {videoId}</p>
-        )}
-      </div>
+      <VideoPlayer url={video.video_url} />
 
       <h1 className="text-2xl font-bold mb-4">{video.title}</h1>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarFallback>
-              {video.author_username[0].toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col">
-              <span className="font-bold text-lg">{video.author_username}</span>
-              <span className="text-xs text-muted-foreground mt-1">
-                {subInfo.subCount} подписчиков
-              </span>
-            </div>
-            <SubscribeButton
-              authorId={video.author_id}
-              initialIsSubscribed={subInfo.isSubscribed}
-            />
-          </div>
-        </div>
+        <ChannelCard
+          subCount={subInfo.subCount}
+          author_username={video.author_username}
+          author_id={video.author_id}
+          isSubscribed={subInfo.isSubscribed}
+        />
 
         <div className="flex items-center gap-2">
           <LikeButton

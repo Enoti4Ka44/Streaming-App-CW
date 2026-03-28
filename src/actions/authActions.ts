@@ -3,9 +3,9 @@
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { query } from "@/utils/db";
-import { User } from "@/types/types";
+import { User } from "@/types/user";
 
-export async function getAllUsers() {
+export async function getAllUsers(): Promise<User[]> {
   const res = await query<User>("SELECT * FROM users ORDER BY username ASC");
   return res.rows;
 }

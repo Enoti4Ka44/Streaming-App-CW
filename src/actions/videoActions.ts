@@ -1,76 +1,69 @@
 "use server";
 
-import { VideoWithAuthor } from "@/types/types";
 import { query } from "@/utils/db";
 import { revalidatePath } from "next/cache";
 import { getCurrentUserId } from "@/actions/authActions";
+import { LikeStatus, Video } from "@/types/video";
 
+//Все видео
 export async function getVideos(
   videoType: "video" | "shorts" = "video",
-): Promise<VideoWithAuthor[]> {
+): Promise<Video[]> {
   const sql = `
-    SELECT 
-      v.video_id,
-      v.author_id,
-      v.title,
-      v.description,
-      v.video_url,
-      v.views_count,
-      v.created_at,
-      v.video_type,
-      u.username as author_username
-    FROM videos v
-    JOIN users u ON v.author_id = u.user_id
-    WHERE v.video_type = $1
-    ORDER BY v.created_at DESC
+    SELECT * FROM videos_with_authors
+    WHERE video_type = $1
+    ORDER BY created_at DESC
   `;
 
-  try {
-    const result = await query<VideoWithAuthor>(sql, [videoType]);
-    return result.rows;
-  } catch (error) {
-    console.error("Error fetching videos:", error);
-    return [];
-  }
+  const result = await query<Video>(sql, [videoType]);
+  return result.rows;
 }
 
-export async function getVideoDetails(videoId: number) {
+//Видео по ID
+export async function getVideoById(
+  videoId: number,
+): Promise<Video | undefined> {
   const sql = `
-    SELECT v.*, u.username as author_username, u.user_id as author_id
-    FROM videos v
-    JOIN users u ON v.author_id = u.user_id
-    WHERE v.video_id = $1
+    SELECT * FROM videos_with_authors
+    WHERE video_id = $1
   `;
-  const result = await query<any>(sql, [videoId]);
+
+  const result = await query<Video>(sql, [videoId]);
   return result.rows[0];
 }
 
-export async function getLikeStatus(videoId: number) {
+//Лайкнуто видео пользователем или нет (+ кол-во лайков)
+export async function getLikeStatus(videoId: number): Promise<LikeStatus> {
   const userId = await getCurrentUserId();
 
   const countSql = `SELECT COUNT(*) FROM likes WHERE video_id = $1`;
 
   if (!userId) {
-    const countRes = await query(countSql, [videoId]);
+    const countRes = await query<{ count: string }>(countSql, [videoId]);
+
     return {
-      likesCount: parseInt(countRes.rows[0].count, 10),
+      likesCount: Number(countRes.rows[0].count),
       isLiked: false,
     };
   }
 
-  const statusSql = `SELECT 1 FROM likes WHERE video_id = $1 AND user_id = $2`;
+  const statusSql = `
+    SELECT 1 FROM likes 
+    WHERE video_id = $1 AND user_id = $2
+  `;
 
   const [countRes, statusRes] = await Promise.all([
-    query(countSql, [videoId]),
+    query<{ count: string }>(countSql, [videoId]),
     query(statusSql, [videoId, userId]),
   ]);
 
   return {
-    likesCount: parseInt(countRes.rows[0].count, 10),
+    likesCount: Number(countRes.rows[0].count),
     isLiked: statusRes.rows.length > 0,
   };
 }
 
+//Лайкнуть видео
 export async function toggleLike(videoId: number) {
   const userId = await getCurrentUserId();
 
@@ -92,8 +85,6 @@ export async function toggleLike(videoId: number) {
       [videoId, userId],
     );
   }
-
-  revalidatePath(`/video/${videoId}`);
 }
 
 export async function recordView(videoId: number) {
@@ -131,18 +122,28 @@ export async function recordView(videoId: number) {
       DO UPDATE SET watched_at = NOW()
     `;
     await query(historySql, [userId, videoId]);
-
-    revalidatePath(`/`);
   } catch (error) {
     console.error("Критическая ошибка в recordView:", error);
   }
 }
 
-export async function getAuthorSubInfo(authorId: number) {
+//Подписан на канал или нет (+ кол-во подписчиков)
+export async function getSubStatus(
+  authorId: number,
+): Promise<{ subCount: number; isSubscribed: boolean }> {
   const userId = await getCurrentUserId();
 
-  const countSql = `SELECT COUNT(*) as total FROM subscriptions WHERE channel_id = $1`;
-  const checkSql = `SELECT 1 FROM subscriptions WHERE subscriber_id = $1 AND channel_id = $2`;
+  const countSql = `
+    SELECT COUNT(*) as total 
+    FROM subscriptions 
+    WHERE channel_id = $1
+  `;
+
+  const checkSql = `
+    SELECT 1 
+    FROM subscriptions 
+    WHERE subscriber_id = $1 AND channel_id = $2
+  `;
 
   const [countRes, checkRes] = await Promise.all([
     query<{ total: string }>(countSql, [authorId]),
@@ -150,11 +151,12 @@ export async function getAuthorSubInfo(authorId: number) {
   ]);
 
   return {
-    subCount: parseInt(countRes.rows[0].total, 10),
+    subCount: Number(countRes.rows[0].total),
     isSubscribed: checkRes.rows.length > 0,
   };
 }
 
+//Подписать на канал
 export async function toggleSubscription(authorId: number) {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error("Вы должны войти в аккаунт");
@@ -174,6 +176,4 @@ export async function toggleSubscription(authorId: number) {
       [userId, authorId],
     );
   }
-
-  revalidatePath("/", "layout");
 }
