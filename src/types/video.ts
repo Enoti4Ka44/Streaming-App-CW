@@ -9,6 +9,8 @@ export interface Video {
   created_at: Date;
   views_count: number;
   author_username: string;
+  watched_at?: Date;
+  liked_at?: Date;
 }
 
 export type CreateVideoDto = Omit<
@@ -16,14 +18,6 @@ export type CreateVideoDto = Omit<
   "video_id" | "created_at" | "views_count" | "author_username"
 >;
 export type UpdateVideoDto = Partial<CreateVideoDto>;
-
-export interface WatchHistory extends Video {
-  watched_at: Date;
-}
-
-export interface LikedVideo extends Video {
-  liked_at: Date;
-}
 
 export interface LikeStatus {
   likesCount: number;

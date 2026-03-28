@@ -4,7 +4,7 @@ import { query } from "@/utils/db";
 import { getCurrentUserId } from "@/actions/authActions";
 import { revalidatePath } from "next/cache";
 import { ChannelStats, Subscriptions } from "@/types/channel";
-import { LikedVideo, Video, WatchHistory } from "@/types/video";
+import { Video } from "@/types/video";
 
 //Статистика канала
 export async function getChannelStats(): Promise<ChannelStats | null> {
@@ -141,7 +141,7 @@ export async function getMySubscriptions(): Promise<Subscriptions[]> {
 }
 
 //История просмотра пользователя
-export async function getWatchHistory(): Promise<WatchHistory[]> {
+export async function getWatchHistory(): Promise<Video[]> {
   const userId = await getCurrentUserId();
   if (!userId) return [];
 
@@ -153,12 +153,12 @@ export async function getWatchHistory(): Promise<WatchHistory[]> {
     ORDER BY wh.watched_at DESC
   `;
 
-  const res = await query<WatchHistory>(sql, [userId]);
+  const res = await query<Video>(sql, [userId]);
   return res.rows;
 }
 
 //Лайкнутые видео пользователя
-export async function getLikedVideos(): Promise<LikedVideo[]> {
+export async function getLikedVideos(): Promise<Video[]> {
   const userId = await getCurrentUserId();
   if (!userId) return [];
 
@@ -170,6 +170,6 @@ export async function getLikedVideos(): Promise<LikedVideo[]> {
     ORDER BY l.created_at DESC
   `;
 
-  const res = await query<LikedVideo>(sql, [userId]);
+  const res = await query<Video>(sql, [userId]);
   return res.rows;
 }

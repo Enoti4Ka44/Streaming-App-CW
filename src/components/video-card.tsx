@@ -1,8 +1,8 @@
-import { VideoWithAuthor } from "@/types/types";
+import { Video } from "@/types/video";
 import { Image, Play } from "lucide-react";
 import Link from "next/link";
 
-export default function VideoCard({ video }: { video: VideoWithAuthor }) {
+export default function VideoCard({ video }: { video: Video }) {
   return (
     <Link
       href={`/video/${video.video_id}`}
@@ -11,17 +11,9 @@ export default function VideoCard({ video }: { video: VideoWithAuthor }) {
       <div
         className={`relative ${video.video_type === "shorts" ? "aspect-2/3" : "aspect-video"} w-full overflow-hidden rounded-xl bg-muted`}
       >
-        {video.thumbnail_url ? (
-          <img
-            src={video.thumbnail_url}
-            alt={video.title}
-            className="object-cover w-full h-full transition-transform group-hover:scale-105"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-            <Play />
-          </div>
-        )}
+        <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+          <Play />
+        </div>
       </div>
 
       <div className="flex flex-col">
@@ -36,6 +28,11 @@ export default function VideoCard({ video }: { video: VideoWithAuthor }) {
           <span>•</span>
           <span>{new Date(video.created_at).toLocaleDateString("ru-RU")}</span>
         </div>
+        {video.watched_at && (
+          <p className="text-[10px] text-muted-foreground mt-1">
+            Просмотрено: {new Date(video.watched_at).toLocaleDateString()}
+          </p>
+        )}
       </div>
     </Link>
   );

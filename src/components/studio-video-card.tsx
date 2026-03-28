@@ -1,5 +1,4 @@
-import { Video } from "@/types/types";
-import { Image, MoreVertical, Pencil, Play, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Play, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,6 +7,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
 import Link from "next/link";
+import { Video } from "@/types/video";
 
 type StudioVideoCardProps = {
   video: Video;
@@ -29,9 +29,15 @@ const StudioVideoCard = ({
         <Play className="h-10 w-10 text-muted-foreground transition-transform group-hover:scale-110" />
 
         <span
-          className={`absolute bottom-2 right-2 ${video.video_type === "shorts" ? "bg-red-600" : "bg-black"} text-white text-[10px] font-bold px-2 py-1 rounded`}
+          className={`absolute top-2 left-2 ${video.video_type === "shorts" ? "bg-red-600" : "bg-black"} text-white text-[10px] font-bold px-2 py-1 rounded-md`}
         >
           {video.video_type.toUpperCase()}
+        </span>
+
+        <span
+          className={`absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-2 py-0.5  rounded`}
+        >
+          {video.duration ? video.duration + "s" : "-"}
         </span>
       </Link>
 

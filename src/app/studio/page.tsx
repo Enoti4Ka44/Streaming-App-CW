@@ -12,18 +12,22 @@ import StudioVideoList from "@/components/studio-video-list";
 import VideoGridSimple from "@/components/video-grid-simple";
 import { redirect } from "next/navigation";
 import { Video, Users, History, Heart } from "lucide-react";
+import ChannelCard from "@/components/channel-card";
 
 export default async function StudioPage() {
   const userId = await getCurrentUserId();
   if (!userId) redirect("/");
 
-  const [myVideos, stats, subs, history, liked] = await Promise.all([
-    getMyVideos(),
-    getChannelStats(),
-    getMySubscriptions(),
-    getWatchHistory(),
-    getLikedVideos(),
-  ]);
+  const [myVideos, stats, subscriptions, watchHistory, likedVideos] =
+    await Promise.all([
+      getMyVideos(),
+      getChannelStats(),
+      getMySubscriptions(),
+      getWatchHistory(),
+      getLikedVideos(),
+    ]);
+
+  console.log(watchHistory);
 
   return (
     <div className="max-w-7xl mx-auto p-6 w-full">
@@ -54,23 +58,16 @@ export default async function StudioPage() {
         </TabsContent>
 
         <TabsContent value="subs">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {subs.length > 0 ? (
-              subs.map((sub: any) => (
-                <div
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {subscriptions.length > 0 ? (
+              subscriptions.map((sub) => (
+                <ChannelCard
                   key={sub.user_id}
-                  className="flex items-center gap-4 p-4 border rounded-xl bg-card"
-                >
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center font-bold">
-                    {sub.username[0]}
-                  </div>
-                  <div>
-                    <p className="font-bold">{sub.username}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {sub.sub_count} подписчиков
-                    </p>
-                  </div>
-                </div>
+                  author_id={sub.user_id}
+                  author_username={sub.username}
+                  subCount={sub.sub_count}
+                  isSubscribed={true}
+                />
               ))
             ) : (
               <p className="col-span-full text-center py-10 text-muted-foreground">
@@ -82,14 +79,14 @@ export default async function StudioPage() {
 
         <TabsContent value="history">
           <VideoGridSimple
-            videos={history}
+            videos={watchHistory}
             emptyText="История просмотров пуста"
           />
         </TabsContent>
 
         <TabsContent value="liked">
           <VideoGridSimple
-            videos={liked}
+            videos={likedVideos}
             emptyText="Вы еще не ставили лайки видео"
           />
         </TabsContent>
