@@ -20,8 +20,8 @@ import {
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { createVideo, updateVideo, deleteVideo } from "@/actions/studioActions";
-import { Video } from "@/types/types";
 import StudioVideoCard from "./studio-video-card";
+import { Video } from "@/types/video";
 
 export default function StudioVideoList({
   initialVideos,
@@ -29,7 +29,7 @@ export default function StudioVideoList({
   initialVideos: Video[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [editingVideo, setEditingVideo] = useState<any | null>(null);
+  const [editingVideo, setEditingVideo] = useState<Video | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleOpenCreate = () => {
@@ -112,6 +112,17 @@ export default function StudioVideoList({
                   required
                   defaultValue={editingVideo?.video_url}
                   placeholder="https://..."
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Длительность (в секундах)
+                </label>
+                <Input
+                  name="duration"
+                  required
+                  defaultValue={editingVideo?.duration}
+                  placeholder="120"
                 />
               </div>
               <div className="space-y-2">
