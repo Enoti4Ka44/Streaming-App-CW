@@ -16,8 +16,6 @@ export default function StudioHeader({
     });
   };
 
-  console.log(stats);
-
   return (
     <div className="bg-card border rounded-xl p-6 mb-8 shadow-sm">
       <div className="flex flex-col md:flex-row md:items-center gap-6">

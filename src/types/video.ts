@@ -9,6 +9,7 @@ export interface Video {
   created_at: Date;
   views_count: number;
   author_username: string;
+  country?: string;
   watched_at?: Date;
   liked_at?: Date;
 }

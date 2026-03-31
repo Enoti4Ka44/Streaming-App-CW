@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { countries } from "@/lib/data";
 
 export default function SettingsForm({ user }: { user: User }) {
   const [isLoading, setIsLoading] = useState(false);
@@ -27,17 +28,6 @@ export default function SettingsForm({ user }: { user: User }) {
     type: null,
     message: "",
   });
-  const countries = [
-    "USA",
-    "Canada",
-    "Russia",
-    "France",
-    "Italy",
-    "Monaco",
-    "Spain",
-    "Japan",
-    "Other",
-  ];
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();

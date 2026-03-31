@@ -5,17 +5,39 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUserId } from "@/actions/authActions";
 import { LikeStatus, Video } from "@/types/video";
 
-//Все видео
+//Все видео (с фильтрами)
 export async function getVideos(
   videoType: "video" | "shorts" = "video",
+  country?: string,
+  sort?: string,
+  searchQuery?: string,
 ): Promise<Video[]> {
-  const sql = `
-    SELECT * FROM videos_with_authors
-    WHERE video_type = $1
-    ORDER BY created_at DESC
+  let sql = `
+    SELECT v.*, u.username as author_username, u.country as author_country
+    FROM videos v
+    JOIN users u ON v.author_id = u.user_id
+    WHERE v.video_type = $1
   `;
 
-  const result = await query<Video>(sql, [videoType]);
+  const params: any[] = [videoType];
+
+  if (country && country !== "all") {
+    params.push(country);
+    sql += ` AND u.country = $${params.length}`;
+  }
+
+  if (searchQuery) {
+    params.push(`%${searchQuery}%`);
+    sql += ` AND (v.title ILIKE $${params.length} OR v.description ILIKE $${params.length})`;
+  }
+
+  if (sort === "oldest") {
+    sql += ` ORDER BY v.created_at ASC`;
+  } else {
+    sql += ` ORDER BY v.created_at DESC`;
+  }
+
+  const result = await query<Video>(sql, params);
   return result.rows;
 }
 

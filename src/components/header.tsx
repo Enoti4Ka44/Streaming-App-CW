@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Search, User, LogOut, ChevronDown } from "lucide-react";
+import { Search, User, LogOut, ChevronDown, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { loginAsUser, logout } from "@/actions/authActions";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface UserInfo {
   user_id: number;
@@ -29,10 +30,23 @@ export default function Header({
 }) {
   const currentUser = allUsers.find((u) => u.user_id === currentUserId);
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e?: React.SubmitEvent) => {
+    e?.preventDefault();
+    if (searchQuery.trim()) {
+      const params = new URLSearchParams(window.location.search);
+      params.set("search", searchQuery.trim());
+      router.push(`/?${params.toString()}`);
+    } else {
+      const params = new URLSearchParams(window.location.search);
+      params.delete("search");
+      router.push(`/?${params.toString()}`);
+    }
+  };
 
   const handleUserChange = async (userId: number) => {
     await loginAsUser(userId);
-
     router.refresh();
   };
 
@@ -48,13 +62,27 @@ export default function Header({
           </span>
         </Link>
 
-        <div className="flex-1 max-w-md mx-auto hidden md:flex relative">
+        <form
+          onSubmit={handleSearch}
+          className="flex-1 max-w-md mx-auto hidden md:flex relative"
+        >
           <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Поиск видео..."
-            className="pl-10 rounded-full bg-secondary/50 border-none"
+            className="pl-10 pr-10 rounded-full bg-secondary border-none focus-visible:ring-1 focus-visible:ring-primary"
           />
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-        </div>
+          <Search
+            className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer"
+            onClick={() => handleSearch()}
+          />
+          {searchQuery && (
+            <X
+              className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground"
+              onClick={() => setSearchQuery("")}
+            />
+          )}
+        </form>
 
         <div className="flex items-center gap-4">
           <DropdownMenu>
