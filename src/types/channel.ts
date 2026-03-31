@@ -7,6 +7,7 @@ export interface Subscriptions {
 
 export interface ChannelStats {
   username: string;
+  country: string;
   registration_date: Date;
   channel_description: string | null;
   subscribers_count: number;

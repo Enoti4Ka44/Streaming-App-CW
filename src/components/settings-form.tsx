@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { use, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,7 @@ import {
 
 export default function SettingsForm({ user }: { user: User }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [country, setCountry] = useState(user.country);
   const [status, setStatus] = useState<{
     type: "success" | "error" | null;
     message: string;
@@ -28,6 +29,7 @@ export default function SettingsForm({ user }: { user: User }) {
   });
   const countries = [
     "USA",
+    "Canada",
     "Russia",
     "France",
     "Italy",
@@ -37,13 +39,13 @@ export default function SettingsForm({ user }: { user: User }) {
     "Other",
   ];
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setStatus({ type: null, message: "" });
 
     const formData = new FormData(e.currentTarget);
-
+    formData.set("country", country);
     try {
       await updateUserProfile(formData);
       setStatus({
@@ -90,7 +92,12 @@ export default function SettingsForm({ user }: { user: User }) {
 
       <div className="space-y-2">
         <label className="text-sm font-medium">Страна</label>
-        <Select>
+        <Select
+          name="country"
+          defaultValue={user.country}
+          onValueChange={setCountry}
+          value={country}
+        >
           <SelectTrigger className="w-full max-w-48">
             <SelectValue placeholder="Выберите страну" />
           </SelectTrigger>

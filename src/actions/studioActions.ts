@@ -15,6 +15,7 @@ export async function getChannelStats(): Promise<ChannelStats | null> {
     SELECT 
       u.username,
       u.created_at as registration_date,
+      u.country,
       u.channel_description,
       (SELECT COUNT(*) FROM subscriptions WHERE channel_id = $1) as subscribers_count,
       (SELECT COUNT(*) FROM videos WHERE author_id = $1) as total_videos,
