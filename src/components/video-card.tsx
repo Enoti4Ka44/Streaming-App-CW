@@ -14,6 +14,11 @@ export default function VideoCard({ video }: { video: Video }) {
         <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
           <Play />
         </div>
+        <span
+          className={`absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-2 py-0.5  rounded-md`}
+        >
+          {video.duration ? video.duration + "s" : "-"}
+        </span>
       </div>
 
       <div className="flex flex-col">

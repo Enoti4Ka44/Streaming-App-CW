@@ -106,7 +106,6 @@ export async function recordView(videoId: number) {
       RETURNING *
     `;
     const viewResult = await query(viewSql, [userId, videoId]);
-    console.log(userId, videoId);
 
     if (viewResult.rows.length > 0) {
       await query(

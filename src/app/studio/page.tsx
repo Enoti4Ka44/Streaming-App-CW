@@ -27,8 +27,6 @@ export default async function StudioPage() {
       getLikedVideos(),
     ]);
 
-  console.log(watchHistory);
-
   return (
     <div className="max-w-7xl mx-auto p-6 w-full">
       <StudioHeader stats={stats} />
